@@ -9,6 +9,7 @@ import numpy as np
 import pickle as pkl
 from tensorboardX import SummaryWriter
 import time
+import re
 import Procedure
 from os.path import join
 # ==============================
@@ -33,6 +34,7 @@ if world.args.model == 'lgn':
     config += f'_nl{world.args.layer}'
 
 log_path = f'logs/{config}.txt'
+loss_log_path = f'logs/{config}_loss.txt'
 emb_path = f'embs/{config}.pkl'
 
 if os.path.exists(emb_path):
@@ -66,6 +68,9 @@ else:
     w = None
     world.cprint("not enable tensorflowboard")
 
+# 손실값 저장을 위한 리스트
+loss_history = []
+
 try:
     best_valid = -1
     patience = 0
@@ -75,6 +80,12 @@ try:
         
         output_information = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
         print(f'EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}')
+        
+        # 손실값 추출 및 저장
+        loss_match = re.search(r'loss([\d.]+)', output_information)
+        if loss_match:
+            loss_value = float(loss_match.group(1))
+            loss_history.append((epoch + 1, loss_value))
         
         if (epoch + 1) % 5 == 0:
             cprint("[VALIDATION]")
@@ -114,5 +125,13 @@ try:
                 
             exit(0)
 finally:
+    # 학습이 끝나면 손실 로그 파일에 저장
+    if loss_history:
+        with open(loss_log_path, 'w', encoding='utf-8') as f:
+            f.write('epoch,loss\n')
+            for epoch, loss in loss_history:
+                f.write(f'{epoch},{loss}\n')
+        print(f'Loss history saved to {loss_log_path}')
+    
     if world.tensorboard:
         w.close()
