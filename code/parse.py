@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument('--comment', type=str,default="lgn")
     parser.add_argument('--load', type=int,default=0)
     parser.add_argument('--epochs', type=int,default=2000)
+    parser.add_argument('--patience', type=int, default=10, help='patience for early stopping')
     parser.add_argument('--multicore', type=int, default=0, help='whether we use multiprocessing or not in test')
     parser.add_argument('--pretrain', type=int, default=0, help='whether we use pretrained weight or not')
     parser.add_argument('--seed', type=int, default=2020, help='random seed')

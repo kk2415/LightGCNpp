@@ -117,7 +117,7 @@ try:
             else:
                 patience += 1
 
-        if patience == 10:
+        if patience >= world.args.patience:
             print('Early Stopping')
             
             with open(log_path, 'a') as f:
