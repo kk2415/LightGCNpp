@@ -110,7 +110,6 @@ try:
                 f.write(f'valid ' + ' '.join([str(x) for x in valid_log]) + '\n')
                 f.write(f'test ' + ' '.join([str(x) for x in test_log]) + '\n')
             
-            # 교수님 채점 기준과 유사한 Hit Ratio@K(첫 번째 K)를 기준으로 베스트 모델 선정 및 얼리 스탑을 수행
             if valid_results['hit_ratio'][0] > best_valid:
                 best_valid = valid_results['hit_ratio'][0]
                 patience = 0
@@ -125,6 +124,7 @@ try:
                         pkl.dump([all_users, all_items, _all_users, _all_items], f)
                     else:
                         pkl.dump([all_users, all_items], f)
+                print(f'Best embeddings saved to {emb_path} (Hit Rate@{world.topks[0]} = {best_valid:.6f})')
             else:
                 patience += 1
 
