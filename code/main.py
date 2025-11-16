@@ -33,9 +33,13 @@ config = f'{world.args.dataset}_seed{world.args.seed}_{world.args.model}_dim{wor
 if world.args.model == 'lgn':
     config += f'_nl{world.args.layer}'
 
-log_path = f'logs/{config}.txt'
-loss_log_path = f'logs/{config}_loss.txt'
-emb_path = f'embs/{config}.pkl'
+# 각 실행마다 구분 가능한 datetime을 파일 이름에 추가
+run_datetime = time.strftime("%Y%m%d-%H%M%S")
+file_prefix = f'{config}_{run_datetime}'
+
+log_path = f'logs/{file_prefix}.txt'
+loss_log_path = f'logs/{file_prefix}_loss.txt'
+emb_path = f'embs/{file_prefix}.pkl'
 
 if os.path.exists(emb_path):
     print('Exists.')
@@ -90,18 +94,25 @@ try:
         if (epoch + 1) % 5 == 0:
             cprint("[VALIDATION]")
             valid_results = Procedure.Valid(dataset, Recmodel, epoch, w, world.config['multicore'])
-            valid_log = [valid_results['ndcg'][0], valid_results['ndcg'][1], valid_results['recall'][0], valid_results['recall'][1], valid_results['precision'][0], valid_results['precision'][1]]
+            valid_log = [valid_results['ndcg'][0], valid_results['ndcg'][1],
+                         valid_results['recall'][0], valid_results['recall'][1],
+                         valid_results['precision'][0], valid_results['precision'][1],
+                         valid_results['hit_ratio'][0], valid_results['hit_ratio'][1]]
             
             cprint("[TEST]")
             test_results = Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
-            test_log = [test_results['ndcg'][0], test_results['ndcg'][1], test_results['recall'][0], test_results['recall'][1], test_results['precision'][0], test_results['precision'][1]]
+            test_log = [test_results['ndcg'][0], test_results['ndcg'][1],
+                        test_results['recall'][0], test_results['recall'][1],
+                        test_results['precision'][0], test_results['precision'][1],
+                        test_results['hit_ratio'][0], test_results['hit_ratio'][1]]
             
             with open(log_path, 'a') as f:
                 f.write(f'valid ' + ' '.join([str(x) for x in valid_log]) + '\n')
                 f.write(f'test ' + ' '.join([str(x) for x in test_log]) + '\n')
             
-            if valid_results['ndcg'][0] > best_valid:
-                best_valid = valid_results['ndcg'][0]
+            # 교수님 채점 기준과 유사한 Hit Ratio@K(첫 번째 K)를 기준으로 베스트 모델 선정 및 얼리 스탑을 수행
+            if valid_results['hit_ratio'][0] > best_valid:
+                best_valid = valid_results['hit_ratio'][0]
                 patience = 0
                 
                 Recmodel.eval()

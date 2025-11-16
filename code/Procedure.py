@@ -62,15 +62,17 @@ def test_one_batch(X):
     sorted_items = X[0].numpy()
     groundTrue = X[1]
     r = utils.getLabel(groundTrue, sorted_items)
-    pre, recall, ndcg = [], [], []
+    pre, recall, ndcg, hit_ratio = [], [], [], []
     for k in world.topks:
         ret = utils.RecallPrecision_ATk(groundTrue, r, k)
         pre.append(ret['precision'])
         recall.append(ret['recall'])
-        ndcg.append(utils.NDCGatK_r(groundTrue,r,k))
-    return {'recall':np.array(recall), 
-            'precision':np.array(pre), 
-            'ndcg':np.array(ndcg)}
+        ndcg.append(utils.NDCGatK_r(groundTrue, r, k))
+        hit_ratio.append(utils.HitRatioAtK_r(groundTrue, r, k))
+    return {'recall':np.array(recall),
+            'precision':np.array(pre),
+            'ndcg':np.array(ndcg),
+            'hit_ratio':np.array(hit_ratio)}
         
             
 def Test(dataset, Recmodel, epoch, w=None, multicore=0):
@@ -86,7 +88,8 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
         pool = multiprocessing.Pool(CORES)
     results = {'precision': np.zeros(len(world.topks)),
                'recall': np.zeros(len(world.topks)),
-               'ndcg': np.zeros(len(world.topks))}
+               'ndcg': np.zeros(len(world.topks)),
+               'hit_ratio': np.zeros(len(world.topks))}
     
     with torch.no_grad():
         users = list(testDict.keys())
@@ -137,9 +140,11 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             results['recall'] += result['recall']
             results['precision'] += result['precision']
             results['ndcg'] += result['ndcg']
+            results['hit_ratio'] += result['hit_ratio']
         results['recall'] /= float(len(users))
         results['precision'] /= float(len(users))
         results['ndcg'] /= float(len(users))
+        results['hit_ratio'] /= float(len(users))
         # results['auc'] = np.mean(auc_record)
         if world.tensorboard:
             w.add_scalars(f'Test/Recall@{world.topks}',
@@ -166,7 +171,8 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
         pool = multiprocessing.Pool(CORES)
     results = {'precision': np.zeros(len(world.topks)),
                'recall': np.zeros(len(world.topks)),
-               'ndcg': np.zeros(len(world.topks))}
+               'ndcg': np.zeros(len(world.topks)),
+               'hit_ratio': np.zeros(len(world.topks))}
     
     with torch.no_grad():
         users = list(validDict.keys())
@@ -217,9 +223,11 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
             results['recall'] += result['recall']
             results['precision'] += result['precision']
             results['ndcg'] += result['ndcg']
+            results['hit_ratio'] += result['hit_ratio']
         results['recall'] /= float(len(users))
         results['precision'] /= float(len(users))
         results['ndcg'] /= float(len(users))
+        results['hit_ratio'] /= float(len(users))
         # results['auc'] = np.mean(auc_record)
         if world.tensorboard:
             w.add_scalars(f'Valid/Recall@{world.topks}',
@@ -251,7 +259,8 @@ def Test_Offline(dataset, all_users, all_items, w=None, multicore=0):
         pool = multiprocessing.Pool(CORES)
     results = {'precision': np.zeros(len(world.topks)),
                'recall': np.zeros(len(world.topks)),
-               'ndcg': np.zeros(len(world.topks))}
+               'ndcg': np.zeros(len(world.topks)),
+               'hit_ratio': np.zeros(len(world.topks))}
     
     with torch.no_grad():
         users = list(testDict.keys())
@@ -302,9 +311,11 @@ def Test_Offline(dataset, all_users, all_items, w=None, multicore=0):
             results['recall'] += result['recall']
             results['precision'] += result['precision']
             results['ndcg'] += result['ndcg']
+            results['hit_ratio'] += result['hit_ratio']
         results['recall'] /= float(len(users))
         results['precision'] /= float(len(users))
         results['ndcg'] /= float(len(users))
+        results['hit_ratio'] /= float(len(users))
         
         if multicore == 1:
             pool.close()

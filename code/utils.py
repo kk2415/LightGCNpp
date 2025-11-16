@@ -256,6 +256,19 @@ def NDCGatK_r(test_data,r,k):
     ndcg[np.isnan(ndcg)] = 0.
     return np.sum(ndcg)
 
+
+def HitRatioAtK_r(test_data, r, k):
+    """
+    Hit Ratio@K
+    각 유저에 대해 Top-K 안에 정답 아이템이 하나라도 있으면 hit(1), 아니면 0으로 두고
+    배치 내 유저들의 hit 값을 합산해서 반환한다.
+    (상위 레벨에서 전체 유저 수로 나누어 평균 Hit Ratio를 계산함)
+    """
+    # r: (batch_size, max_K) 의 0/1 행렬, 상위 K만 사용
+    right_pred = r[:, :k].sum(1)
+    hits = (right_pred > 0).astype(np.float32)
+    return np.sum(hits)
+
 def AUC(all_item_scores, dataset, test_data):
     """
         design for a single user
