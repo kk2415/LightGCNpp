@@ -92,14 +92,7 @@ try:
             loss_history.append((epoch + 1, loss_value))
         
         if (epoch + 1) % 5 == 0:
-            # Train set 평가 (학습 적합도 모니터링용)
-            cprint("[TRAIN EVAL]")
-            train_results = Procedure.TrainEval(dataset, Recmodel, epoch, w, world.config['multicore'])
-            train_log = [train_results['ndcg'][0], train_results['ndcg'][1],
-                         train_results['recall'][0], train_results['recall'][1],
-                         train_results['precision'][0], train_results['precision'][1],
-                         train_results['hit_ratio'][0], train_results['hit_ratio'][1]]
-
+            # Validation / Test 평가
             cprint("[VALIDATION]")
             valid_results = Procedure.Valid(dataset, Recmodel, epoch, w, world.config['multicore'])
             valid_log = [valid_results['ndcg'][0], valid_results['ndcg'][1],
@@ -115,7 +108,6 @@ try:
                         test_results['hit_ratio'][0], test_results['hit_ratio'][1]]
             
             with open(log_path, 'a') as f:
-                f.write(f'train ' + ' '.join([str(x) for x in train_log]) + '\n')
                 f.write(f'valid ' + ' '.join([str(x) for x in valid_log]) + '\n')
                 f.write(f'test ' + ' '.join([str(x) for x in test_log]) + '\n')
             
